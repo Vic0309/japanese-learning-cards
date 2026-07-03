@@ -219,17 +219,27 @@
             window.speechSynthesis.speak(u);
         }
 
-        // 朗讀日語範例單字
+        // 朗讀日語範例單字（修正精準發音版）
         function playExampleTTS() {
             const item = currentFilteredList[currentIndex];
             if (!item || !item.exJp) return;
-            
-            const cleanJp = item.exJp.split(' ')[0];
-            const u = new SpeechSynthesisUtterance(cleanJp);
+    
+            let textToSpeak = '';
+    
+            // 使用正規表達式檢查有沒有包含括號 ( )，如果有，就抓取括號內的純假名
+            const match = item.exJp.match(/\(([^)]+)\)/);
+            if (match && match[1]) {
+                textToSpeak = match[1]; // 抓到的是 "なつ" 或 "さかな"
+            } else {
+            // 如果沒有括號（像是片假名單字），就維持原本拿第一個空格前的單字
+                textToSpeak = item.exJp.split(' ')[0]; 
+            }
+    
+            const u = new SpeechSynthesisUtterance(textToSpeak);
             u.lang = 'ja-JP';
             u.rate = 0.9;
             window.speechSynthesis.speak(u);
-        }
+        }    
 
         // 監聽鍵盤快捷鍵
         document.addEventListener('keydown', function(e) {
