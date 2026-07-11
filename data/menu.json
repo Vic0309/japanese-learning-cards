@@ -1,0 +1,10 @@
+[
+  {
+    "title": "50音平假名",
+    "file": "data/japanese-kana.json"
+  },
+  {
+    "title": "旅遊用語單字",
+    "file": "data/japanese-12years-travel.json"
+  }
+]
