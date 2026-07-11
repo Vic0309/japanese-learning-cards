@@ -352,20 +352,28 @@
             showCard();
         }
 
-        // 6. Web Speech API 音訊播放 (主體假名)
+        // 6. Web Speech API 音訊播放 (升級版主體單字發音)
         function playTTS() {
             if (currentData.length === 0) return;
             const item = currentData[currentIndex];
             
             let textToSpeak = item.kana;
-            // 遇特殊複合規則改讀羅馬拼音輔助
-            if (item.kana.includes('/') || item.kana.length > 3) {
+        
+            // 策略 A：如果是旅遊單字，且例句括號 ( ) 裡有純假名，優先抓這裡的假名來發音！(最精準)
+            if (item.exJp) {
+                const match = item.exJp.match(/\(([^)]+)\)/);
+                if (match && match[1]) {
+                    textToSpeak = match[1];
+                }
+            } 
+            // 策略 B：如果是 50 音圖，遇到有斜線 / 的特殊複合規則，才降級讀羅馬拼音
+            else if (item.kana.includes('/')) {
                 textToSpeak = item.romaji;
             }
-
+        
             const u = new SpeechSynthesisUtterance(textToSpeak);
             u.lang = 'ja-JP';
-            u.rate = 0.85;
+            u.rate = 0.85; // 速度微調，讓你聽得更清楚
             window.speechSynthesis.speak(u);
         }
 
