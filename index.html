@@ -3,214 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日語假名 & 語音規則互動字卡</title>
-    <!-- 引入獨立的 CSS 樣式表 -->
-    <link rel="stylesheet" href="style.css">
+    <title>日語學習閃卡庫</title>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --primary-hover: #357ABD;
+            --bg-color: #F8F9FA;
+            --sidebar-bg: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-sub: #666666;
+        }
+
+        body {
+            display: flex;
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 左側側邊欄 */
+        #sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid #E2E8F0;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            box-sizing: border-box;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+        }
+
+        #sidebar h3 {
+            margin: 0 0 20px 8px;
+            font-size: 1.1rem;
+            color: var(--text-sub);
+            letter-spacing: 1px;
+        }
+
+        #menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+        }
+
+        .menu-item {
+            padding: 12px 16px;
+            background-color: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #4A5568;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background-color: #EDF2F7;
+            color: var(--text-main);
+        }
+
+        .menu-item.active {
+            background-color: #EBF8FF;
+            color: var(--primary-color);
+            border-color: #BEE3F8;
+        }
+
+        /* 右側主內容區 */
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* 字卡容器 */
+        .card-wrapper {
+            width: 100%;
+            max-width: 480px;
+            perspective: 1000px; /* 為了未來的翻牌特效預留 */
+        }
+
+        .flash-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 320px;
+            justify-content: space-between;
+            border: 1px solid #E2E8F0;
+        }
+
+        /* 字卡內容樣式 */
+        .card-header {
+            font-size: 0.9rem;
+            color: #A0AEC0;
+            background: #EDF2F7;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        .card-main {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--text-main);
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        .card-main:hover {
+            color: var(--primary-color);
+        }
+
+        .card-romaji {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .card-origin {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            margin-bottom: 15px;
+        }
+
+        .card-example {
+            border-top: 1px dashed #E2E8F0;
+            width: 100%;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        .ex-jp {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #2D3748;
+            margin-bottom: 4px;
+            cursor: pointer;
+        }
+        .ex-jp:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .ex-tw {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+        }
+
+        /* 控制按鈕區 */
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 480px;
+            justify-content: space-between;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #E2E8F0;
+            color: #4A5568;
+        }
+
+        .btn:hover {
+            background-color: #CBD5E0;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* 頁碼計數器 */
+        #counter {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+        }
+    </style>
 </head>
 <body>
 
-    <header>
-        <h1>日語假名 & 語音規則隨身卡</h1>
-        <p>涵蓋五十音、濁音、半濁音、拗音、促音與長音規則</p>
-    </header>
-
-    <!-- 分類過濾選單 -->
-    <div class="filter-container" id="filterContainer">
-        <button class="filter-btn active" onclick="filterCards('全部', event)">全部 (<span id="count-全部">0</span>)</button>
-        <button class="filter-btn" onclick="filterCards('平假名', event)">平假名 (<span id="count-平假名">0</span>)</button>
-        <button class="filter-btn" onclick="filterCards('片假名', event)">片假名 (<span id="count-片假名">0</span>)</button>
-        <button class="filter-btn" onclick="filterCards('濁音', event)">濁音 (<span id="count-濁音">0</span>)</button>
-        <button class="filter-btn" onclick="filterCards('半濁音', event)">半濁音 (<span id="count-半濁音">0</span>)</button>
-        <button class="filter-btn" onclick="filterCards('拗音', event)">拗音 (<span id="count-拗音">0</span>)</button>
-        <button class="filter-btn" onclick="filterCards('促音', event)">促音 (<span id="count-促音">0</span>)</button>
-        <button class="filter-btn" onclick="filterCards('長音', event)">長音 (<span id="count-長音">0</span>)</button>
-    </div>
-
-    <!-- 字卡渲染區域 -->
-    <div class="card-area" onclick="flipCard()">
-        <div class="flashcard" id="cardElement">
-            <!-- 卡片正面 -->
-            <div class="card-face card-front">
-                <div class="badge" id="cardTypeBadge">分類</div>
-                <div class="kana-display" id="kanaFront">載入中...</div>
-                <div class="hint-text">點擊卡片看背面答案與字源</div>
-            </div>
-            <!-- 卡片背面 -->
-            <div class="card-face card-back" onclick="event.stopPropagation();">
-                <div style="width: 100%;">
-                    <div class="info-row" style="display: flex; justify-content: space-between; align-items: baseline;">
-                        <div>
-                            <div class="info-label">羅馬拼音 / 發音</div>
-                            <div class="info-value romaji-val" id="romajiBack">-</div>
-                        </div>
-                        <div class="badge" id="cardTypeBadgeBack" style="position:static;">分類</div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-label" id="originLabel">根源漢字</div>
-                        <div class="info-value" id="originBack">-</div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-label" id="reasonLabel">字形演變原因</div>
-                        <div class="info-value" id="reasonBack">-</div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-label">單字範例 / 情境</div>
-                        <div class="info-value" id="exampleBack">-</div>
-                    </div>
-                </div>
-
-                <!-- 語音朗讀按鈕 -->
-                <div class="audio-section">
-                    <button class="audio-btn" onclick="playTTS()">
-                        🔊 播放假名發音
-                    </button>
-                    <button class="audio-btn" style="background:#efebe9; color:#5d4037;" onclick="playExampleTTS()">
-                        🔊 播放範例單字
-                    </button>
-                </div>
-            </div>
+    <!-- 左側側邊欄：動態分類 -->
+    <div id="sidebar">
+        <h3>學習庫分類</h3>
+        <div id="menu-list">
+            <!-- 透過 JS 載入 menu.json 後動態生成 -->
         </div>
     </div>
 
-    <!-- 控制列 -->
-    <div class="controls">
-        <button class="btn-ctrl" onclick="prevCard(event)">←</button>
-        <span class="progress-text" id="progressText">0 / 0</span>
-        <button class="btn-ctrl" onclick="nextCard(event)">→</button>
-    </div>
+    <!-- 右側內容區面 -->
+    <div id="main-content">
+        <div class="card-wrapper">
+            <div class="flash-card">
+                <div>
+                    <span id="card-type" class="card-header">分類</span>
+                    <!-- 點擊假名可以直接發音 -->
+                    <div id="card-kana" class="card-main" onclick="playTTS()">あ</div>
+                    <div id="card-romaji" class="card-romaji">romaji</div>
+                    <div id="card-origin" class="card-origin">字源說明</div>
+                </div>
+                
+                <div class="card-example">
+                    <!-- 點擊例句可以直接發音 -->
+                    <div id="card-exJp" class="ex-jp" onclick="playExampleTTS()">例句日文</div>
+                    <div id="card-exTw" class="ex-tw">例句中文</div>
+                </div>
+            </div>
+        </div>
 
-    <div class="keyboard-shortcuts">
-        鍵盤快捷鍵：【空白鍵】翻轉卡片 | 【左/右方向鍵】切換上下張卡
+        <!-- 底部切換按鈕 -->
+        <div class="controls">
+            <button class="btn" onclick="prevCard()">上一個</button>
+            <button class="btn btn-primary" onclick="playTTS()">發音 (Space)</button>
+            <button class="btn" onclick="nextCard()">下一個</button>
+        </div>
+
+        <!-- 當前進度計數 -->
+        <div id="counter">0 / 0</div>
     </div>
 
     <script>
-        let fullDatabase = [];       // 用於存放從 JSON 讀取進來的完整資料
-        let currentFilteredList = [];// 存放目前過濾分類後的資料
+        // 全域狀態變數
+        let currentData = [];
         let currentIndex = 0;
 
-        // 核心功能：非同步讀取本地/網路 JSON 檔案
-        async function fetchDatabase() {
-            try {
-                const response = await fetch('data/japanese-kana.json');
-                if (!response.ok) throw new Error('讀取 JSON 檔案失敗');
-                fullDatabase = await response.json();
-                
-                // 初始化資料
-                currentFilteredList = [...fullDatabase];
-                updateCategoryCounts();
-                loadCard();
-            } catch (error) {
-                console.error(error);
-                document.getElementById('kanaFront').innerText = "載入失敗";
-                alert("無法載入資料庫，請確認 data/japanese-kana.json 路徑是否正確。");
-            }
-        }
+        // 1. 網頁開啟時，優先讀取選單目錄
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch('data/menu.json')
+                .then(response => {
+                    if (!response.ok) throw new Error('找不到 data/menu.json 檔案');
+                    return response.json();
+                })
+                .then(menuData => {
+                    renderMenu(menuData);
+                    // 預設自動載入第一個分類
+                    if (menuData.length > 0) {
+                        loadVocabularyFile(menuData[0].file, document.getElementById('menu-list').firstChild);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('載入選單控制檔失敗，請確認 data/menu.json 是否存在！');
+                });
+        });
 
-          // 計算各類別總數並動態寫入按鈕
-        function updateCategoryCounts() {
-            const categories = ['全部', '平假名', '片假名', '濁音', '半濁音', '拗音', '促音', '長音'];
-            categories.forEach(cat => {
-                const count = cat === '全部' ? fullDatabase.length : fullDatabase.filter(item => item.type === cat).length;
-                document.getElementById(`count-${cat}`).innerText = count;
+        // 2. 渲染左側選單
+        function renderMenu(menuData) {
+            const menuList = document.getElementById('menu-list');
+            menuList.innerHTML = '';
+            
+            menuData.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+                div.innerText = item.title;
+                
+                // 點擊分類切換檔案
+                div.addEventListener('click', () => {
+                    loadVocabularyFile(item.file, div);
+                });
+                
+                menuList.appendChild(div);
             });
         }
 
-        // 卡片翻轉
-        function flipCard() {
-            if (currentFilteredList.length === 0) return;
-            document.getElementById('cardElement').classList.toggle('is-flipped');
+        // 3. 動態讀取選定的單字資料庫 JSON
+        function loadVocabularyFile(filePath, element) {
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            if (element) element.classList.add('active');
+
+            fetch(filePath)
+                .then(response => {
+                    if (!response.ok) throw new Error(`無法載入檔案: ${filePath}`);
+                    return response.json();
+                })
+                .then(data => {
+                    currentData = data;
+                    currentIndex = 0; // 切換庫時重設回第一張
+                    showCard();
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('card-kana').innerText = "❌";
+                    document.getElementById('card-romaji').innerText = "讀取失敗";
+                    document.getElementById('card-origin').innerText = "請確認檔案路徑與 JSON 格式是否正確。";
+                });
         }
 
-        // 載入當前索引之字卡數據
-        function loadCard() {
-            if(currentFilteredList.length === 0) {
-                document.getElementById('kanaFront').innerText = "無資料";
-                document.getElementById('romajiBack').innerText = "-";
-                document.getElementById('originBack').innerText = "-";
-                document.getElementById('reasonBack').innerText = "-";
-                document.getElementById('exampleBack').innerText = "-";
-                document.getElementById('progressText').innerText = "0 / 0";
-                return;
-            }
+        // 4. 將目前的資料渲染到字卡網頁畫面上
+        function showCard() {
+            if (currentData.length === 0) return;
+            const item = currentData[currentIndex];
 
-            const item = currentFilteredList[currentIndex];
+            // 替換各個欄位內容
+            document.getElementById('card-type').innerText = item.type || "未分類";
+            document.getElementById('card-kana').innerText = item.kana;
+            document.getElementById('card-romaji').innerText = item.romaji;
             
-            // 重設卡片至正面狀態
-            document.getElementById('cardElement').classList.remove('is-flipped');
-
-            // 寫入正面
-            document.getElementById('cardTypeBadge').innerText = item.type;
-            document.getElementById('kanaFront').innerText = item.kana;
-
-            // 寫入背面
-            document.getElementById('cardTypeBadgeBack').innerText = item.type;
-            document.getElementById('romajiBack').innerText = item.romaji;
-            document.getElementById('originBack').innerText = item.origin;
-            document.getElementById('reasonBack').innerText = item.reason;
+            // 兼容舊格式中的 reason 或 origin 欄位作為說明
+            document.getElementById('card-origin').innerText = item.reason || item.origin || "";
             
-            // 處理部分單字缺少說明或有不同欄位名稱的彈性防呆
-            const displayExJp = item.exJp || "";
-            const displayExTw = item.exTw || item.Disk || "";
-            document.getElementById('exampleBack').innerText = displayExJp && displayExTw ? `${displayExJp} — ${displayExTw}` : "暫無範例";
+            document.getElementById('card-exJp').innerText = item.exJp || "";
+            document.getElementById('card-exTw').innerText = item.exTw || "";
 
-            // 動態調整標題 (促音與長音適用規則，非傳統字源)
-            if (item.type === "促音" || item.type === "長音") {
-                document.getElementById('originLabel').innerText = "結構 / 音變來源";
-                document.getElementById('reasonLabel').innerText = "規則使用時機說明";
-            } else {
-                document.getElementById('originLabel').innerText = "根源漢字";
-                document.getElementById('reasonLabel').innerText = "字形演變原因";
-            }
-
-            // 更新進度條文字
-            document.getElementById('progressText').innerText = `${currentIndex + 1} / ${currentFilteredList.length}`;
+            // 更新計數器狀態
+            document.getElementById('counter').innerText = `${currentIndex + 1} / ${currentData.length}`;
         }
 
-        // 分類過濾切換
-        function filterCards(category, event) {
-            // 切換按鈕樣式
-            const btns = document.querySelectorAll('.filter-btn');
-            btns.forEach(btn => btn.classList.remove('active'));
-            if (event) event.target.classList.add('active');
-
-            // 過濾數據
-            if (category === '全部') {
-                currentFilteredList = [...fullDatabase];
-            } else {
-                currentFilteredList = fullDatabase.filter(item => item.type === category);
-            }
-            
-            currentIndex = 0;
-            loadCard();
+        // 5. 按鈕控制：下一張、上一張
+        function nextCard() {
+            if (currentData.length === 0) return;
+            currentIndex = (currentIndex + 1) % currentData.length;
+            showCard();
         }
 
-        // 下一張
-        function nextCard(e) {
-            if(e) e.stopPropagation();
-            if (currentFilteredList.length === 0) return;
-            currentIndex = (currentIndex + 1) % currentFilteredList.length;
-            loadCard();
+        function prevCard() {
+            if (currentData.length === 0) return;
+            currentIndex = (currentIndex - 1 + currentData.length) % currentData.length;
+            showCard();
         }
 
-        // 上一張
-        function prevCard(e) {
-            if(e) e.stopPropagation();
-            if (currentFilteredList.length === 0) return;
-            currentIndex = (currentIndex - 1 + currentFilteredList.length) % currentFilteredList.length;
-            loadCard();
-        }
-
-        // 使用 Web Speech API (TTS) 朗讀日語假名
+        // 6. Web Speech API 音訊播放 (主體假名)
         function playTTS() {
-            const item = currentFilteredList[currentIndex];
-            if (!item) return;
-
+            if (currentData.length === 0) return;
+            const item = currentData[currentIndex];
+            
             let textToSpeak = item.kana;
+            // 遇特殊複合規則改讀羅馬拼音輔助
             if (item.kana.includes('/') || item.kana.length > 3) {
-                textToSpeak = item.romaji; // 遇到長音/促音規則，改朗讀拼音輔助
+                textToSpeak = item.romaji;
             }
 
             const u = new SpeechSynthesisUtterance(textToSpeak);
@@ -219,44 +369,40 @@
             window.speechSynthesis.speak(u);
         }
 
-        // 朗讀日語範例單字（修正精準發音版）
+        // 7. Web Speech API 音訊播放 (修正後的精準範例單字版)
         function playExampleTTS() {
-            const item = currentFilteredList[currentIndex];
+            if (currentData.length === 0) return;
+            const item = currentData[currentIndex];
             if (!item || !item.exJp) return;
-    
+            
             let textToSpeak = '';
-    
-            // 使用正規表達式檢查有沒有包含括號 ( )，如果有，就抓取括號內的純假名
+            
+            // 透過正規表達式提取括號 ( ) 內的純假名，確保 100% 發音正確
             const match = item.exJp.match(/\(([^)]+)\)/);
             if (match && match[1]) {
-                textToSpeak = match[1]; // 抓到的是 "なつ" 或 "さかな"
+                textToSpeak = match[1]; 
             } else {
-            // 如果沒有括號（像是片假名單字），就維持原本拿第一個空格前的單字
+                // 若為片假名單字無括號，則退回原邏輯抓第一個空格前的內容
                 textToSpeak = item.exJp.split(' ')[0]; 
             }
-    
+            
             const u = new SpeechSynthesisUtterance(textToSpeak);
             u.lang = 'ja-JP';
             u.rate = 0.9;
             window.speechSynthesis.speak(u);
-        }    
+        }
 
-        // 監聽鍵盤快捷鍵
-        document.addEventListener('keydown', function(e) {
+        // 8. 貼心的鍵盤快捷鍵支援：空白鍵發音、左右方向鍵切換字卡
+        document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
-                e.preventDefault(); 
-                flipCard();
+                e.preventDefault(); // 防止空白鍵滾動網頁
+                playTTS();
             } else if (e.code === 'ArrowRight') {
                 nextCard();
             } else if (e.code === 'ArrowLeft') {
                 prevCard();
             }
         });
-
-        // 網頁加載完畢後，執行 JSON 檔案讀取
-        window.onload = function() {
-            fetchDatabase();
-        };
     </script>
 </body>
 </html>
