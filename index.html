@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日語學習閃卡庫</title>
+    <title>日語學習與開車隨身聽</title>
     <style>
         :root {
             --primary-color: #4A90E2;
             --primary-hover: #357ABD;
-            --bg-color: #F8F9FA;
+            --success-color: #48BB78;
+            --danger-color: #E53E3E;
+            --bg-color: #F7FAFC;
             --sidebar-bg: #FFFFFF;
-            --card-bg: #FFFFFF;
-            --text-main: #333333;
-            --text-sub: #666666;
+            --text-main: #2D3748;
+            --text-sub: #718096;
+            --border-color: #E2E8F0;
         }
 
         body {
@@ -26,23 +28,23 @@
             overflow: hidden;
         }
 
-        /* 左側側邊欄 */
+        /* 左側邊欄 */
         #sidebar {
-            width: 260px;
+            width: 250px;
             background-color: var(--sidebar-bg);
-            border-right: 1px solid #E2E8F0;
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            padding: 24px 16px;
+            padding: 20px 15px;
             box-sizing: border-box;
             box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+            flex-shrink: 0;
         }
 
         #sidebar h3 {
-            margin: 0 0 20px 8px;
+            margin: 0 0 16px 8px;
             font-size: 1.1rem;
             color: var(--text-sub);
-            letter-spacing: 1px;
         }
 
         #menu-list {
@@ -54,18 +56,16 @@
 
         .menu-item {
             padding: 12px 16px;
-            background-color: transparent;
-            border: 1px solid transparent;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
-            color: #4A5568;
+            color: var(--text-main);
             transition: all 0.2s ease;
+            border: 1px solid transparent;
         }
 
         .menu-item:hover {
             background-color: #EDF2F7;
-            color: var(--text-main);
         }
 
         .menu-item.active {
@@ -79,332 +79,422 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            overflow-y: auto;
-            position: relative;
+            padding: 24px;
+            overflow: hidden;
         }
 
-        /* 字卡容器 */
-        .card-wrapper {
-            width: 100%;
-            max-width: 480px;
-            perspective: 1000px; /* 為了未來的翻牌特效預留 */
-        }
-
-        .flash-card {
-            background-color: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            padding: 40px;
-            box-sizing: border-box;
+        /* 控制列 (播放器) */
+        .player-bar {
+            background-color: #FFFFFF;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             display: flex;
-            flex-direction: column;
             align-items: center;
-            text-align: center;
-            min-height: 320px;
             justify-content: space-between;
-            border: 1px solid #E2E8F0;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
 
-        /* 字卡內容樣式 */
-        .card-header {
-            font-size: 0.9rem;
-            color: #A0AEC0;
-            background: #EDF2F7;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 10px;
-        }
-
-        .card-main {
-            font-size: 4rem;
-            font-weight: bold;
-            color: var(--text-main);
-            margin: 10px 0;
-            cursor: pointer;
-        }
-
-        .card-main:hover {
-            color: var(--primary-color);
-        }
-
-        .card-romaji {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .card-origin {
-            font-size: 0.95rem;
-            color: var(--text-sub);
-            margin-bottom: 15px;
-        }
-
-        .card-example {
-            border-top: 1px dashed #E2E8F0;
-            width: 100%;
-            padding-top: 15px;
-            margin-top: 10px;
-        }
-
-        .ex-jp {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: #2D3748;
-            margin-bottom: 4px;
-            cursor: pointer;
-        }
-        .ex-jp:hover {
-            color: var(--primary-color);
-            text-decoration: underline;
-        }
-
-        .ex-tw {
-            font-size: 0.95rem;
-            color: var(--text-sub);
-        }
-
-        /* 控制按鈕區 */
-        .controls {
+        .player-controls {
             display: flex;
-            gap: 16px;
-            margin-top: 30px;
-            width: 100%;
-            max-width: 480px;
-            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
         }
 
         .btn {
-            flex: 1;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            background-color: #E2E8F0;
-            color: #4A5568;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .btn:hover {
-            background-color: #CBD5E0;
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-success:hover { background-color: #38A169; }
+
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: #C53030; }
+
+        .status-text {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            font-weight: 500;
         }
 
-        .btn-primary {
+        /* 表格區域 */
+        .table-container {
+            flex: 1;
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background-color: #F7FAFC;
+            color: var(--text-sub);
+            padding: 14px 16px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            border-bottom: 2px solid var(--border-color);
+            z-index: 10;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background-color: #F7FAFC;
+            cursor: pointer;
+        }
+
+        tr.playing-row {
+            background-color: #EBF8FF !important;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .btn-play-single {
+            background-color: #EDF2F7;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-play-single:hover {
             background-color: var(--primary-color);
             color: white;
         }
 
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
+        .badge {
+            background-color: #EDF2F7;
+            color: #4A5568;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
 
-        /* 頁碼計數器 */
-        #counter {
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: var(--text-sub);
-        }
+        .romaji { color: var(--primary-color); font-weight: 600; }
+        .ex-jp { font-weight: 500; color: #1A202C; }
+        .ex-tw { color: var(--text-sub); font-size: 0.88rem; }
     </style>
 </head>
 <body>
 
-    <!-- 左側側邊欄：動態分類 -->
+    <!-- 左側選單 -->
     <div id="sidebar">
-        <h3>學習庫分類</h3>
-        <div id="menu-list">
-            <!-- 透過 JS 載入 menu.json 後動態生成 -->
-        </div>
+        <h3>學習分類</h3>
+        <div id="menu-list"></div>
     </div>
 
-    <!-- 右側內容區面 -->
+    <!-- 右側主要區塊 -->
     <div id="main-content">
-        <div class="card-wrapper">
-            <div class="flash-card">
-                <div>
-                    <span id="card-type" class="card-header">分類</span>
-                    <!-- 點擊假名可以直接發音 -->
-                    <div id="card-kana" class="card-main" onclick="playTTS()">あ</div>
-                    <div id="card-romaji" class="card-romaji">romaji</div>
-                    <div id="card-origin" class="card-origin">字源說明</div>
-                </div>
-                
-                <div class="card-example">
-                    <!-- 點擊例句可以直接發音 -->
-                    <div id="card-exJp" class="ex-jp" onclick="playExampleTTS()">例句日文</div>
-                    <div id="card-exTw" class="ex-tw">例句中文</div>
-                </div>
+        
+        <!-- 頂部開車聽講控制列 -->
+        <div class="player-bar">
+            <div class="player-controls">
+                <button id="btn-play-all" class="btn btn-primary" onclick="startPlayAll()">
+                    <span>▶</span> 全部順序播放
+                </button>
+                <button id="btn-pause" class="btn btn-danger" onclick="togglePause()" style="display: none;">
+                    <span>❚❚</span> 暫停
+                </button>
             </div>
+            <div id="status-text" class="status-text">點擊單字或按下播放按鈕即可聽發音</div>
         </div>
 
-        <!-- 底部切換按鈕 -->
-        <div class="controls">
-            <button class="btn" onclick="prevCard()">上一個</button>
-            <button class="btn btn-primary" onclick="playTTS()">發音 (Space)</button>
-            <button class="btn" onclick="nextCard()">下一個</button>
+        <!-- 單字表格區塊 -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">播放</th>
+                        <th style="width: 110px;">分類 (Type)</th>
+                        <th style="width: 120px;">假名 (Kana)</th>
+                        <th style="width: 120px;">羅馬拼音 (Romaji)</th>
+                        <th style="width: 110px;">字源 (Origin)</th>
+                        <th>說明 / 意思 (Reason)</th>
+                        <th>例句 (exJp)</th>
+                        <th>例句中文 (exTw)</th>
+                    </tr>
+                </thead>
+                <tbody id="vocab-table-body">
+                    <!-- 動態渲染單字表格內容 -->
+                </tbody>
+            </table>
         </div>
-
-        <!-- 當前進度計數 -->
-        <div id="counter">0 / 0</div>
     </div>
 
     <script>
-        // 全域狀態變數
         let currentData = [];
         let currentIndex = 0;
+        
+        // 播放狀態控制變數
+        let isLoopingAll = false; // 是否正在連續順序播放
+        let isPaused = false;     // 是否處於暫停狀態
+        let currentUtterance = null;
 
-        // 1. 網頁開啟時，優先讀取選單目錄
+        // 頁面初次載入
         window.addEventListener('DOMContentLoaded', () => {
             fetch('data/menu.json')
-                .then(response => {
-                    if (!response.ok) throw new Error('找不到 data/menu.json 檔案');
-                    return response.json();
-                })
+                .then(res => res.json())
                 .then(menuData => {
                     renderMenu(menuData);
-                    // 預設自動載入第一個分類
                     if (menuData.length > 0) {
                         loadVocabularyFile(menuData[0].file, document.getElementById('menu-list').firstChild);
                     }
                 })
-                .catch(err => {
-                    console.error(err);
-                    alert('載入選單控制檔失敗，請確認 data/menu.json 是否存在！');
-                });
+                .catch(err => console.error("載入選單失敗:", err));
         });
 
-        // 2. 渲染左側選單
+        // 渲染左側選單
         function renderMenu(menuData) {
             const menuList = document.getElementById('menu-list');
             menuList.innerHTML = '';
-            
-            menuData.forEach((item, index) => {
+            menuData.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = 'menu-item';
                 div.innerText = item.title;
-                
-                // 點擊分類切換檔案
-                div.addEventListener('click', () => {
-                    loadVocabularyFile(item.file, div);
-                });
-                
+                div.addEventListener('click', () => loadVocabularyFile(item.file, div));
                 menuList.appendChild(div);
             });
         }
 
-        // 3. 動態讀取選定的單字資料庫 JSON
+        // 動態載入單字 JSON 並渲染表格
         function loadVocabularyFile(filePath, element) {
+            stopSpeech(); // 切換分類時停止發音
+
             document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
             if (element) element.classList.add('active');
 
             fetch(filePath)
-                .then(response => {
-                    if (!response.ok) throw new Error(`無法載入檔案: ${filePath}`);
-                    return response.json();
-                })
+                .then(res => res.json())
                 .then(data => {
                     currentData = data;
-                    currentIndex = 0; // 切換庫時重設回第一張
-                    showCard();
+                    currentIndex = 0;
+                    renderTable();
                 })
-                .catch(err => {
-                    console.error(err);
-                    document.getElementById('card-kana').innerText = "❌";
-                    document.getElementById('card-romaji').innerText = "讀取失敗";
-                    document.getElementById('card-origin').innerText = "請確認檔案路徑與 JSON 格式是否正確。";
+                .catch(err => console.error("載入單字檔失敗:", err));
+        }
+
+        // 渲染表格內容
+        function renderTable() {
+            const tbody = document.getElementById('vocab-table-body');
+            tbody.innerHTML = '';
+
+            currentData.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.id = `row-${idx}`;
+                
+                // 點擊整行即可從該單字開始繼續播放
+                tr.addEventListener('click', (e) => {
+                    // 避免重複觸發點擊按鈕事件
+                    if (e.target.tagName !== 'BUTTON') {
+                        playFromIndex(idx);
+                    }
                 });
+
+                tr.innerHTML = `
+                    <td>
+                        <button class="btn-play-single" onclick="playFromIndex(${idx})" title="從此單字播放">▶</button>
+                    </td>
+                    <td><span class="badge">${item.type || '通用'}</span></td>
+                    <td class="ex-jp">${item.kana || ''}</td>
+                    <td class="romaji">${item.romaji || ''}</td>
+                    <td>${item.origin || ''}</td>
+                    <td>${item.reason || ''}</td>
+                    <td class="ex-jp">${item.exJp || ''}</td>
+                    <td class="ex-tw">${item.exTw || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updateStatusText("已載入 " + currentData.length + " 個單字");
         }
 
-        // 4. 將目前的資料渲染到字卡網頁畫面上
-        function showCard() {
-            if (currentData.length === 0) return;
-            const item = currentData[currentIndex];
-
-            // 替換各個欄位內容
-            document.getElementById('card-type').innerText = item.type || "未分類";
-            document.getElementById('card-kana').innerText = item.kana;
-            document.getElementById('card-romaji').innerText = item.romaji;
-            
-            // 兼容舊格式中的 reason 或 origin 欄位作為說明
-            document.getElementById('card-origin').innerText = item.reason || item.origin || "";
-            
-            document.getElementById('card-exJp').innerText = item.exJp || "";
-            document.getElementById('card-exTw').innerText = item.exTw || "";
-
-            // 更新計數器狀態
-            document.getElementById('counter').innerText = `${currentIndex + 1} / ${currentData.length}`;
-        }
-
-        // 5. 按鈕控制：下一張、上一張
-        function nextCard() {
-            if (currentData.length === 0) return;
-            currentIndex = (currentIndex + 1) % currentData.length;
-            showCard();
-        }
-
-        function prevCard() {
-            if (currentData.length === 0) return;
-            currentIndex = (currentIndex - 1 + currentData.length) % currentData.length;
-            showCard();
-        }
-
-        // 6. Web Speech API 音訊播放 (主體單字發音 - 修正完全版)
-        function playTTS() {
-            if (currentData.length === 0) return;
-            const item = currentData[currentIndex];
-            
-            let textToSpeak = item.kana;
-        
-            // 只有在五十音庫、且格子裡包含斜線「/」時，才需要降級改讀羅馬拼音
-            if (item.kana.includes('/')) {
-                textToSpeak = item.romaji;
+        // 高亮顯示當前正在播放的表格列
+        function highlightRow(index) {
+            document.querySelectorAll('#vocab-table-body tr').forEach(tr => tr.classList.remove('playing-row'));
+            const currentRow = document.getElementById(`row-${index}`);
+            if (currentRow) {
+                currentRow.classList.add('playing-row');
+                currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 自動捲動到當前單字
             }
-            // 其他一般單字（如旅遊用語），100% 直接朗讀 item.kana 的純假名，保證只有單字音！
-        
-            const u = new SpeechSynthesisUtterance(textToSpeak);
-            u.lang = 'ja-JP';
-            u.rate = 0.85;
-            window.speechSynthesis.speak(u);
         }
 
-        // 7. Web Speech API 音訊播放 (修正後的精準範例單字版)
-        function playExampleTTS() {
-            if (currentData.length === 0) return;
-            const item = currentData[currentIndex];
-            if (!item || !item.exJp) return;
+        // --- 核心語音播放引擎 ---
+
+        // 播放單一單字的完整流程：日文單字 -> 中文說明 -> 日文例句 -> 例句中文
+        function speakCurrentItem(index, onComplete) {
+            if (index >= currentData.length || isPaused) {
+                if (index >= currentData.length) {
+                    stopSpeech();
+                    updateStatusText("所有單字已播放完畢！");
+                }
+                return;
+            }
+
+            currentIndex = index;
+            highlightRow(index);
+            const item = currentData[index];
+
+            // 準備四個朗讀步驟
+            let wordJp = item.kana.includes('/') ? item.romaji : item.kana;
+            let wordTw = item.reason || item.origin || '';
             
-            let textToSpeak = '';
-            
-            // 透過正規表達式提取括號 ( ) 內的純假名，確保 100% 發音正確
-            const match = item.exJp.match(/\(([^)]+)\)/);
-            if (match && match[1]) {
-                textToSpeak = match[1]; 
+            // 例句假名處理
+            let exJpText = '';
+            if (item.exJp) {
+                const match = item.exJp.match(/\(([^)]+)\)/);
+                exJpText = match ? match[1] : item.exJp.split(' ')[0];
+            }
+            let exTwText = item.exTw || '';
+
+            // 建立播放隊列 (Sequence)
+            const sequence = [
+                { text: wordJp, lang: 'ja-JP', speed: 0.85, label: `[${index + 1}/${currentData.length}] 朗讀日文單字: ${item.kana}` },
+                { text: wordTw, lang: 'zh-TW', speed: 1.0, label: `[${index + 1}/${currentData.length}] 朗讀單字中文: ${wordTw}` },
+                { text: exJpText, lang: 'ja-JP', speed: 0.9, label: `[${index + 1}/${currentData.length}] 朗讀日文例句...` },
+                { text: exTwText, lang: 'zh-TW', speed: 1.0, label: `[${index + 1}/${currentData.length}] 朗讀例句中文: ${exTwText}` }
+            ].filter(step => step.text.trim() !== ''); // 過濾掉空欄位
+
+            let stepIdx = 0;
+
+            function playNextStep() {
+                if (isPaused) return;
+
+                if (stepIdx < sequence.length) {
+                    const step = sequence[stepIdx];
+                    updateStatusText(step.label);
+
+                    currentUtterance = new SpeechSynthesisUtterance(step.text);
+                    currentUtterance.lang = step.lang;
+                    currentUtterance.rate = step.speed;
+
+                    currentUtterance.onend = () => {
+                        stepIdx++;
+                        playNextStep();
+                    };
+
+                    currentUtterance.onerror = () => {
+                        stepIdx++;
+                        playNextStep();
+                    };
+
+                    window.speechSynthesis.speak(currentUtterance);
+                } else {
+                    // 當前單字四個步驟全唸完，進入下一個單字
+                    if (onComplete) onComplete();
+                }
+            }
+
+            playNextStep();
+        }
+
+        // 從指定的索引（Index）開始連續播放
+        function playFromIndex(index) {
+            stopSpeech();
+            isLoopingAll = true;
+            isPaused = false;
+            updateUIForPlaying();
+
+            function loop(idx) {
+                if (!isLoopingAll || isPaused) return;
+                speakCurrentItem(idx, () => {
+                    if (isLoopingAll && !isPaused) {
+                        loop(idx + 1); // 播放下一個單字
+                    }
+                });
+            }
+
+            loop(index);
+        }
+
+        // 按下「全部順序播放」
+        function startPlayAll() {
+            playFromIndex(0);
+        }
+
+        // 暫停與繼續開關
+        function togglePause() {
+            const pauseBtn = document.getElementById('btn-pause');
+
+            if (!isPaused) {
+                // ---- 執行暫停 ----
+                isPaused = true;
+                window.speechSynthesis.cancel(); // 立即中斷當前語音
+                
+                pauseBtn.className = "btn btn-success";
+                pauseBtn.innerHTML = "<span>▶</span> 開始 (繼續)";
+                updateStatusText(`已暫停於第 ${currentIndex + 1} 個單字。點擊「開始」即可繼續`);
             } else {
-                // 若為片假名單字無括號，則退回原邏輯抓第一個空格前的內容
-                textToSpeak = item.exJp.split(' ')[0]; 
+                // ---- 執行繼續 ----
+                isPaused = false;
+                pauseBtn.className = "btn btn-danger";
+                pauseBtn.innerHTML = "<span>❚❚</span> 暫停";
+                
+                // 從剛才暫停的單字重新開始播放
+                playFromIndex(currentIndex);
             }
-            
-            const u = new SpeechSynthesisUtterance(textToSpeak);
-            u.lang = 'ja-JP';
-            u.rate = 0.9;
-            window.speechSynthesis.speak(u);
         }
 
-        // 8. 貼心的鍵盤快捷鍵支援：空白鍵發音、左右方向鍵切換字卡
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault(); // 防止空白鍵滾動網頁
-                playTTS();
-            } else if (e.code === 'ArrowRight') {
-                nextCard();
-            } else if (e.code === 'ArrowLeft') {
-                prevCard();
-            }
-        });
+        // 完全停止語音與重置 UI
+        function stopSpeech() {
+            isLoopingAll = false;
+            isPaused = false;
+            window.speechSynthesis.cancel();
+            
+            const playAllBtn = document.getElementById('btn-play-all');
+            const pauseBtn = document.getElementById('btn-pause');
+            
+            playAllBtn.style.display = "inline-flex";
+            pauseBtn.style.display = "none";
+            pauseBtn.className = "btn btn-danger";
+            pauseBtn.innerHTML = "<span>❚❚</span> 暫停";
+
+            document.querySelectorAll('#vocab-table-body tr').forEach(tr => tr.classList.remove('playing-row'));
+        }
+
+        function updateUIForPlaying() {
+            document.getElementById('btn-play-all').style.display = "none";
+            const pauseBtn = document.getElementById('btn-pause');
+            pauseBtn.style.display = "inline-flex";
+            pauseBtn.className = "btn btn-danger";
+            pauseBtn.innerHTML = "<span>❚❚</span> 暫停";
+        }
+
+        function updateStatusText(text) {
+            document.getElementById('status-text').innerText = text;
+        }
     </script>
 </body>
 </html>
