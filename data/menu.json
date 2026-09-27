@@ -6,5 +6,13 @@
   {
     "title": "旅遊用語單字",
     "file": "data/japanese-12years-travel.json"
+  },
+  {
+    "title": "金錢和數字用語單字",
+    "file": "data/money_numbers.json"
+  },
+  {
+    "title": "日期時間用語單字",
+    "file": "data/date_time.json"
   }
 ]
