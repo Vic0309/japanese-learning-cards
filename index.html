@@ -262,9 +262,12 @@
         let isLoopingAll = false; // 是否正在連續順序播放
         let isPaused = false;     // 是否處於暫停狀態
         let currentUtterance = null;
+        let wakeLock = null;      // 螢幕保持常亮 Lock 物件
 
         // 頁面初次載入
         window.addEventListener('DOMContentLoaded', () => {
+            initMediaSession(); // 初始化媒體控制介面
+
             fetch('data/menu.json')
                 .then(res => res.json())
                 .then(menuData => {
@@ -274,6 +277,81 @@
                     }
                 })
                 .catch(err => console.error("載入選單失敗:", err));
+        });
+
+        // 1. 初始化 Media Session API (手機鎖屏與藍芽按鈕控制)
+        function initMediaSession() {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.setActionHandler('play', () => {
+                    if (isPaused) {
+                        togglePause();
+                    } else if (!isLoopingAll) {
+                        startPlayAll();
+                    }
+                });
+
+                navigator.mediaSession.setActionHandler('pause', () => {
+                    if (!isPaused) {
+                        togglePause();
+                    }
+                });
+
+                navigator.mediaSession.setActionHandler('nexttrack', () => {
+                    if (currentIndex + 1 < currentData.length) {
+                        playFromIndex(currentIndex + 1);
+                    }
+                });
+
+                navigator.mediaSession.setActionHandler('previoustrack', () => {
+                    if (currentIndex - 1 >= 0) {
+                        playFromIndex(currentIndex - 1);
+                    }
+                });
+            }
+        }
+
+        // 2. 更新手機鎖屏/通知欄資訊 (Media Metadata)
+        function updateMediaSessionMetadata(item, index) {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: `${item.kana} (${item.romaji || ''})`,
+                    artist: item.reason || item.origin || '日文隨身聽',
+                    album: item.type || '日語學習',
+                    artwork: [
+                        { src: 'https://via.placeholder.com/192/4A90E2/FFFFFF?text=JP', sizes: '192x192', type: 'image/png' },
+                        { src: 'https://via.placeholder.com/512/4A90E2/FFFFFF?text=JP', sizes: '512x512', type: 'image/png' }
+                    ]
+                });
+            }
+        }
+
+        // 3. Screen Wake Lock API：請求手機螢幕保持常亮不休眠
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator && wakeLock === null) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => {
+                        wakeLock = null;
+                    });
+                }
+            } catch (err) {
+                console.warn("Wake Lock 請求失敗:", err.message);
+            }
+        }
+
+        // 釋放 Wake Lock 允許螢幕自然休眠
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
+
+        // 當切換分頁回來的防護機制
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible' && isLoopingAll && !isPaused) {
+                await requestWakeLock();
+            }
         });
 
         // 渲染左側選單
@@ -291,7 +369,7 @@
 
         // 動態載入單字 JSON 並渲染表格
         function loadVocabularyFile(filePath, element) {
-            stopSpeech(); // 切換分類時停止發音
+            stopSpeech();
 
             document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
             if (element) element.classList.add('active');
@@ -315,9 +393,7 @@
                 const tr = document.createElement('tr');
                 tr.id = `row-${idx}`;
                 
-                // 點擊整行即可從該單字開始繼續播放
                 tr.addEventListener('click', (e) => {
-                    // 避免重複觸發點擊按鈕事件
                     if (e.target.tagName !== 'BUTTON') {
                         playFromIndex(idx);
                     }
@@ -347,13 +423,12 @@
             const currentRow = document.getElementById(`row-${index}`);
             if (currentRow) {
                 currentRow.classList.add('playing-row');
-                currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 自動捲動到當前單字
+                currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
         // --- 核心語音播放引擎 ---
 
-        // 播放單一單字的完整流程：日文單字 -> 中文說明 -> 日文例句 -> 例句中文
         function speakCurrentItem(index, onComplete) {
             if (index >= currentData.length || isPaused) {
                 if (index >= currentData.length) {
@@ -367,11 +442,13 @@
             highlightRow(index);
             const item = currentData[index];
 
-            // 準備四個朗讀步驟
+            // 即時同步至手機鎖屏/通知列
+            updateMediaSessionMetadata(item, index);
+
+            // 準備朗讀內容
             let wordJp = item.kana.includes('/') ? item.romaji : item.kana;
             let wordTw = item.reason || item.origin || '';
             
-            // 例句假名處理
             let exJpText = '';
             if (item.exJp) {
                 const match = item.exJp.match(/\(([^)]+)\)/);
@@ -379,13 +456,12 @@
             }
             let exTwText = item.exTw || '';
 
-            // 建立播放隊列 (Sequence)
             const sequence = [
                 { text: wordJp, lang: 'ja-JP', speed: 0.85, label: `[${index + 1}/${currentData.length}] 朗讀日文單字: ${item.kana}` },
                 { text: wordTw, lang: 'zh-TW', speed: 1.0, label: `[${index + 1}/${currentData.length}] 朗讀單字中文: ${wordTw}` },
                 { text: exJpText, lang: 'ja-JP', speed: 0.9, label: `[${index + 1}/${currentData.length}] 朗讀日文例句...` },
                 { text: exTwText, lang: 'zh-TW', speed: 1.0, label: `[${index + 1}/${currentData.length}] 朗讀例句中文: ${exTwText}` }
-            ].filter(step => step.text.trim() !== ''); // 過濾掉空欄位
+            ].filter(step => step.text.trim() !== '');
 
             let stepIdx = 0;
 
@@ -412,7 +488,6 @@
 
                     window.speechSynthesis.speak(currentUtterance);
                 } else {
-                    // 當前單字四個步驟全唸完，進入下一個單字
                     if (onComplete) onComplete();
                 }
             }
@@ -420,18 +495,20 @@
             playNextStep();
         }
 
-        // 從指定的索引（Index）開始連續播放
         function playFromIndex(index) {
             stopSpeech();
             isLoopingAll = true;
             isPaused = false;
             updateUIForPlaying();
+            
+            // 啟動螢幕保持常亮防護
+            requestWakeLock();
 
             function loop(idx) {
                 if (!isLoopingAll || isPaused) return;
                 speakCurrentItem(idx, () => {
                     if (isLoopingAll && !isPaused) {
-                        loop(idx + 1); // 播放下一個單字
+                        loop(idx + 1);
                     }
                 });
             }
@@ -439,40 +516,49 @@
             loop(index);
         }
 
-        // 按下「全部順序播放」
         function startPlayAll() {
             playFromIndex(0);
         }
 
-        // 暫停與繼續開關
         function togglePause() {
             const pauseBtn = document.getElementById('btn-pause');
 
             if (!isPaused) {
-                // ---- 執行暫停 ----
                 isPaused = true;
-                window.speechSynthesis.cancel(); // 立即中斷當前語音
-                
+                window.speechSynthesis.cancel();
+                releaseWakeLock(); // 暫停時解除螢幕強制開啟
+
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.playbackState = "paused";
+                }
+
                 pauseBtn.className = "btn btn-success";
                 pauseBtn.innerHTML = "<span>▶</span> 開始 (繼續)";
                 updateStatusText(`已暫停於第 ${currentIndex + 1} 個單字。點擊「開始」即可繼續`);
             } else {
-                // ---- 執行繼續 ----
                 isPaused = false;
+                requestWakeLock(); // 恢復播放時重新維持螢幕常亮
+
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.playbackState = "playing";
+                }
+
                 pauseBtn.className = "btn btn-danger";
                 pauseBtn.innerHTML = "<span>❚❚</span> 暫停";
-                
-                // 從剛才暫停的單字重新開始播放
                 playFromIndex(currentIndex);
             }
         }
 
-        // 完全停止語音與重置 UI
         function stopSpeech() {
             isLoopingAll = false;
             isPaused = false;
             window.speechSynthesis.cancel();
-            
+            releaseWakeLock(); // 完全停止時允許螢幕休眠
+
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = "none";
+            }
+
             const playAllBtn = document.getElementById('btn-play-all');
             const pauseBtn = document.getElementById('btn-pause');
             
@@ -490,6 +576,10 @@
             pauseBtn.style.display = "inline-flex";
             pauseBtn.className = "btn btn-danger";
             pauseBtn.innerHTML = "<span>❚❚</span> 暫停";
+
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = "playing";
+            }
         }
 
         function updateStatusText(text) {
