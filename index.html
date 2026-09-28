@@ -28,7 +28,7 @@
             overflow: hidden;
         }
 
-        /* ---------------- 電腦端電腦版預設樣式 ---------------- */
+        /* ---------------- 電腦端預設樣式 ---------------- */
         #sidebar {
             width: 250px;
             background-color: var(--sidebar-bg);
@@ -188,15 +188,13 @@
         .ex-jp { font-weight: 500; color: #1A202C; }
         .ex-tw { color: var(--text-sub); font-size: 0.88rem; }
 
-
-        /* ---------------- 📱 專為 iPhone / Safari 手機優化 (響應式設計) ---------------- */
+        /* ---------------- 📱 iPhone Safari 優化 ---------------- */
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
                 height: 100vh;
             }
 
-            /* 1. 選單變為頂部水平滑動條 */
             #sidebar {
                 width: 100%;
                 height: auto;
@@ -205,7 +203,7 @@
                 border-bottom: 1px solid var(--border-color);
             }
 
-            #sidebar h3 { display: none; } /* 手機上隱藏「學習分類」標題省空間 */
+            #sidebar h3 { display: none; }
 
             #menu-list {
                 flex-direction: row;
@@ -219,7 +217,6 @@
                 flex-shrink: 0;
             }
 
-            /* 2. 主內容區域與播放條拉滿 */
             #main-content {
                 padding: 12px;
             }
@@ -247,12 +244,11 @@
                 text-align: center;
             }
 
-            /* 3. 將表格重構為手機卡片樣式 (避免出現橫向滑動與擠壓) */
             table, thead, tbody, th, td, tr {
                 display: block;
             }
 
-            thead { display: none; } /* 手機上隱藏表頭 */
+            thead { display: none; }
 
             tr {
                 margin-bottom: 12px;
@@ -268,29 +264,33 @@
                 border-bottom: none;
             }
 
-            /* 手機字卡內部欄位編排 */
-            td:nth-child(1) { /* 播放按鈕與分類 */
+            td:nth-child(1) {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 8px;
             }
 
-            td:nth-child(3) { font-size: 1.3rem; font-weight: bold; } /* 假名加大 */
-            td:nth-child(4) { font-size: 0.95rem; } /* 羅馬拼音 */
-            td:nth-child(6) { font-size: 0.95rem; color: #4A5568; margin: 4px 0; } /* 說明意思 */
+            td:nth-child(3) { font-size: 1.3rem; font-weight: bold; }
+            td:nth-child(4) { font-size: 0.95rem; }
+            td:nth-child(6) { font-size: 0.95rem; color: #4A5568; margin: 4px 0; }
             
             td:nth-child(7) { 
                 border-top: 1px dashed var(--border-color); 
                 padding-top: 8px; 
                 margin-top: 6px; 
-            } /* 例句分隔線 */
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- 左側選單 (手機上自動轉為頂部橫向滑動) -->
+    <!-- iOS 專用防休眠無聲影音元件 (1x1 像素隱形) -->
+    <video id="ios-wake-video" playsinline loop muted style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;">
+        <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAAAG1kYXQAAAA=" type="video/mp4">
+    </video>
+
+    <!-- 左側選單 -->
     <div id="sidebar">
         <h3>學習分類</h3>
         <div id="menu-list"></div>
@@ -298,8 +298,6 @@
 
     <!-- 右側主要區塊 -->
     <div id="main-content">
-        
-        <!-- 頂部播放器控制列 -->
         <div class="player-bar">
             <div class="player-controls">
                 <button id="btn-play-all" class="btn btn-primary" onclick="startPlayAll()">
@@ -312,7 +310,6 @@
             <div id="status-text" class="status-text">點擊單字或按下播放按鈕即可聽發音</div>
         </div>
 
-        <!-- 單字列表區塊 (手機上自動轉為極簡字卡) -->
         <div class="table-container">
             <table>
                 <thead>
@@ -327,9 +324,7 @@
                         <th>例句中文 (exTw)</th>
                     </tr>
                 </thead>
-                <tbody id="vocab-table-body">
-                    <!-- 動態渲染單字表格內容 -->
-                </tbody>
+                <tbody id="vocab-table-body"></tbody>
             </table>
         </div>
     </div>
@@ -392,27 +387,42 @@
             }
         }
 
-        async function requestWakeLock() {
+        // 強力防休眠啟動：結合 WakeLock API 與 iOS 隱形影片 Loop
+        async function enablePreventSleep() {
+            // 1. 觸發隱形影片播放 (iOS 核心防黑屏 Hack)
+            const videoEl = document.getElementById('ios-wake-video');
+            if (videoEl && videoEl.paused) {
+                videoEl.play().catch(e => console.log("iOS Video Wake Lock 提示:", e));
+            }
+
+            // 2. 請求標準 Screen Wake Lock API
             try {
                 if ('wakeLock' in navigator && wakeLock === null) {
                     wakeLock = await navigator.wakeLock.request('screen');
                     wakeLock.addEventListener('release', () => { wakeLock = null; });
                 }
             } catch (err) {
-                console.warn("Wake Lock 請求失敗:", err.message);
+                console.warn("Wake Lock 請求警告:", err.message);
             }
         }
 
-        function releaseWakeLock() {
+        // 解除防休眠機制
+        function disablePreventSleep() {
+            const videoEl = document.getElementById('ios-wake-video');
+            if (videoEl && !videoEl.paused) {
+                videoEl.pause();
+            }
+
             if (wakeLock !== null) {
                 wakeLock.release();
                 wakeLock = null;
             }
         }
 
+        // 頁面重回前景時，自動補抓防休眠
         document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible' && isLoopingAll && !isPaused) {
-                await requestWakeLock();
+            if (document.visibilityState === 'visible' && isLoopingAll && !isPaused) {
+                await enablePreventSleep();
             }
         });
 
@@ -458,7 +468,6 @@
                     }
                 });
 
-                // 手機版會依據此 DOM 結構自動轉為卡片，第一個 td 包含按鈕與 badge 標籤
                 tr.innerHTML = `
                     <td>
                         <button class="btn-play-single" onclick="playFromIndex(${idx})" title="從此單字播放">▶</button>
@@ -556,7 +565,9 @@
             isLoopingAll = true;
             isPaused = false;
             updateUIForPlaying();
-            requestWakeLock();
+            
+            // 使用者手動點擊時，立刻激活防休眠 (iOS 規範)
+            enablePreventSleep();
 
             function loop(idx) {
                 if (!isLoopingAll || isPaused) return;
@@ -580,7 +591,7 @@
             if (!isPaused) {
                 isPaused = true;
                 window.speechSynthesis.cancel();
-                releaseWakeLock();
+                disablePreventSleep(); // 暫停時釋放防休眠
 
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.playbackState = "paused";
@@ -591,7 +602,7 @@
                 updateStatusText(`已暫停於第 ${currentIndex + 1} 個單字。點擊「開始」即可繼續`);
             } else {
                 isPaused = false;
-                requestWakeLock();
+                enablePreventSleep(); // 恢復播放時重新激活防休眠
 
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.playbackState = "playing";
@@ -607,7 +618,7 @@
             isLoopingAll = false;
             isPaused = false;
             window.speechSynthesis.cancel();
-            releaseWakeLock();
+            disablePreventSleep();
 
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.playbackState = "none";
