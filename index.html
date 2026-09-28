@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>日語學習與開車隨身聽</title>
     <style>
         :root {
@@ -21,14 +21,14 @@
             display: flex;
             margin: 0;
             padding: 0;
-            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             height: 100vh;
             overflow: hidden;
         }
 
-        /* 左側邊欄 */
+        /* ---------------- 電腦端電腦版預設樣式 ---------------- */
         #sidebar {
             width: 250px;
             background-color: var(--sidebar-bg);
@@ -62,19 +62,16 @@
             color: var(--text-main);
             transition: all 0.2s ease;
             border: 1px solid transparent;
+            white-space: nowrap;
         }
 
-        .menu-item:hover {
-            background-color: #EDF2F7;
-        }
-
+        .menu-item:hover { background-color: #EDF2F7; }
         .menu-item.active {
             background-color: #EBF8FF;
             color: var(--primary-color);
             border-color: #BEE3F8;
         }
 
-        /* 右側主內容區 */
         #main-content {
             flex: 1;
             display: flex;
@@ -83,7 +80,6 @@
             overflow: hidden;
         }
 
-        /* 控制列 (播放器) */
         .player-bar {
             background-color: #FFFFFF;
             padding: 16px 24px;
@@ -117,13 +113,8 @@
         }
 
         .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-primary:hover { background-color: var(--primary-hover); }
-
         .btn-success { background-color: var(--success-color); color: white; }
-        .btn-success:hover { background-color: #38A169; }
-
         .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-danger:hover { background-color: #C53030; }
 
         .status-text {
             font-size: 0.95rem;
@@ -131,7 +122,6 @@
             font-weight: 500;
         }
 
-        /* 表格區域 */
         .table-container {
             flex: 1;
             background-color: #FFFFFF;
@@ -139,6 +129,7 @@
             border: 1px solid var(--border-color);
             overflow: auto;
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
@@ -165,11 +156,7 @@
             vertical-align: middle;
         }
 
-        tr:hover {
-            background-color: #F7FAFC;
-            cursor: pointer;
-        }
-
+        tr:hover { background-color: #F7FAFC; cursor: pointer; }
         tr.playing-row {
             background-color: #EBF8FF !important;
             border-left: 4px solid var(--primary-color);
@@ -185,13 +172,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
             font-size: 0.9rem;
-        }
-
-        .btn-play-single:hover {
-            background-color: var(--primary-color);
-            color: white;
         }
 
         .badge {
@@ -206,11 +187,110 @@
         .romaji { color: var(--primary-color); font-weight: 600; }
         .ex-jp { font-weight: 500; color: #1A202C; }
         .ex-tw { color: var(--text-sub); font-size: 0.88rem; }
+
+
+        /* ---------------- 📱 專為 iPhone / Safari 手機優化 (響應式設計) ---------------- */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                height: 100vh;
+            }
+
+            /* 1. 選單變為頂部水平滑動條 */
+            #sidebar {
+                width: 100%;
+                height: auto;
+                padding: 10px 12px;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            #sidebar h3 { display: none; } /* 手機上隱藏「學習分類」標題省空間 */
+
+            #menu-list {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 4px;
+            }
+
+            .menu-item {
+                padding: 8px 14px;
+                font-size: 0.88rem;
+                flex-shrink: 0;
+            }
+
+            /* 2. 主內容區域與播放條拉滿 */
+            #main-content {
+                padding: 12px;
+            }
+
+            .player-bar {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+                padding: 12px 16px;
+                margin-bottom: 12px;
+            }
+
+            .player-controls {
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+                padding: 12px;
+            }
+
+            .status-text {
+                font-size: 0.85rem;
+                text-align: center;
+            }
+
+            /* 3. 將表格重構為手機卡片樣式 (避免出現橫向滑動與擠壓) */
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            thead { display: none; } /* 手機上隱藏表頭 */
+
+            tr {
+                margin-bottom: 12px;
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                padding: 12px;
+                background-color: #FFFFFF;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            }
+
+            td {
+                padding: 4px 0;
+                border-bottom: none;
+            }
+
+            /* 手機字卡內部欄位編排 */
+            td:nth-child(1) { /* 播放按鈕與分類 */
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+            }
+
+            td:nth-child(3) { font-size: 1.3rem; font-weight: bold; } /* 假名加大 */
+            td:nth-child(4) { font-size: 0.95rem; } /* 羅馬拼音 */
+            td:nth-child(6) { font-size: 0.95rem; color: #4A5568; margin: 4px 0; } /* 說明意思 */
+            
+            td:nth-child(7) { 
+                border-top: 1px dashed var(--border-color); 
+                padding-top: 8px; 
+                margin-top: 6px; 
+            } /* 例句分隔線 */
+        }
     </style>
 </head>
 <body>
 
-    <!-- 左側選單 -->
+    <!-- 左側選單 (手機上自動轉為頂部橫向滑動) -->
     <div id="sidebar">
         <h3>學習分類</h3>
         <div id="menu-list"></div>
@@ -219,7 +299,7 @@
     <!-- 右側主要區塊 -->
     <div id="main-content">
         
-        <!-- 頂部開車聽講控制列 -->
+        <!-- 頂部播放器控制列 -->
         <div class="player-bar">
             <div class="player-controls">
                 <button id="btn-play-all" class="btn btn-primary" onclick="startPlayAll()">
@@ -232,7 +312,7 @@
             <div id="status-text" class="status-text">點擊單字或按下播放按鈕即可聽發音</div>
         </div>
 
-        <!-- 單字表格區塊 -->
+        <!-- 單字列表區塊 (手機上自動轉為極簡字卡) -->
         <div class="table-container">
             <table>
                 <thead>
@@ -258,15 +338,13 @@
         let currentData = [];
         let currentIndex = 0;
         
-        // 播放狀態控制變數
-        let isLoopingAll = false; // 是否正在連續順序播放
-        let isPaused = false;     // 是否處於暫停狀態
+        let isLoopingAll = false;
+        let isPaused = false;
         let currentUtterance = null;
-        let wakeLock = null;      // 螢幕保持常亮 Lock 物件
+        let wakeLock = null;
 
-        // 頁面初次載入
         window.addEventListener('DOMContentLoaded', () => {
-            initMediaSession(); // 初始化媒體控制介面
+            initMediaSession();
 
             fetch('data/menu.json')
                 .then(res => res.json())
@@ -279,38 +357,27 @@
                 .catch(err => console.error("載入選單失敗:", err));
         });
 
-        // 1. 初始化 Media Session API (手機鎖屏與藍芽按鈕控制)
         function initMediaSession() {
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.setActionHandler('play', () => {
-                    if (isPaused) {
-                        togglePause();
-                    } else if (!isLoopingAll) {
-                        startPlayAll();
-                    }
+                    if (isPaused) togglePause();
+                    else if (!isLoopingAll) startPlayAll();
                 });
 
                 navigator.mediaSession.setActionHandler('pause', () => {
-                    if (!isPaused) {
-                        togglePause();
-                    }
+                    if (!isPaused) togglePause();
                 });
 
                 navigator.mediaSession.setActionHandler('nexttrack', () => {
-                    if (currentIndex + 1 < currentData.length) {
-                        playFromIndex(currentIndex + 1);
-                    }
+                    if (currentIndex + 1 < currentData.length) playFromIndex(currentIndex + 1);
                 });
 
                 navigator.mediaSession.setActionHandler('previoustrack', () => {
-                    if (currentIndex - 1 >= 0) {
-                        playFromIndex(currentIndex - 1);
-                    }
+                    if (currentIndex - 1 >= 0) playFromIndex(currentIndex - 1);
                 });
             }
         }
 
-        // 2. 更新手機鎖屏/通知欄資訊 (Media Metadata)
         function updateMediaSessionMetadata(item, index) {
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
@@ -325,21 +392,17 @@
             }
         }
 
-        // 3. Screen Wake Lock API：請求手機螢幕保持常亮不休眠
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator && wakeLock === null) {
                     wakeLock = await navigator.wakeLock.request('screen');
-                    wakeLock.addEventListener('release', () => {
-                        wakeLock = null;
-                    });
+                    wakeLock.addEventListener('release', () => { wakeLock = null; });
                 }
             } catch (err) {
                 console.warn("Wake Lock 請求失敗:", err.message);
             }
         }
 
-        // 釋放 Wake Lock 允許螢幕自然休眠
         function releaseWakeLock() {
             if (wakeLock !== null) {
                 wakeLock.release();
@@ -347,14 +410,12 @@
             }
         }
 
-        // 當切換分頁回來的防護機制
         document.addEventListener('visibilitychange', async () => {
             if (wakeLock !== null && document.visibilityState === 'visible' && isLoopingAll && !isPaused) {
                 await requestWakeLock();
             }
         });
 
-        // 渲染左側選單
         function renderMenu(menuData) {
             const menuList = document.getElementById('menu-list');
             menuList.innerHTML = '';
@@ -367,7 +428,6 @@
             });
         }
 
-        // 動態載入單字 JSON 並渲染表格
         function loadVocabularyFile(filePath, element) {
             stopSpeech();
 
@@ -384,7 +444,6 @@
                 .catch(err => console.error("載入單字檔失敗:", err));
         }
 
-        // 渲染表格內容
         function renderTable() {
             const tbody = document.getElementById('vocab-table-body');
             tbody.innerHTML = '';
@@ -399,11 +458,13 @@
                     }
                 });
 
+                // 手機版會依據此 DOM 結構自動轉為卡片，第一個 td 包含按鈕與 badge 標籤
                 tr.innerHTML = `
                     <td>
                         <button class="btn-play-single" onclick="playFromIndex(${idx})" title="從此單字播放">▶</button>
+                        <span class="badge">${item.type || '通用'}</span>
                     </td>
-                    <td><span class="badge">${item.type || '通用'}</span></td>
+                    <td style="display:none;"><span class="badge">${item.type || '通用'}</span></td>
                     <td class="ex-jp">${item.kana || ''}</td>
                     <td class="romaji">${item.romaji || ''}</td>
                     <td>${item.origin || ''}</td>
@@ -417,7 +478,6 @@
             updateStatusText("已載入 " + currentData.length + " 個單字");
         }
 
-        // 高亮顯示當前正在播放的表格列
         function highlightRow(index) {
             document.querySelectorAll('#vocab-table-body tr').forEach(tr => tr.classList.remove('playing-row'));
             const currentRow = document.getElementById(`row-${index}`);
@@ -426,8 +486,6 @@
                 currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
-
-        // --- 核心語音播放引擎 ---
 
         function speakCurrentItem(index, onComplete) {
             if (index >= currentData.length || isPaused) {
@@ -442,10 +500,8 @@
             highlightRow(index);
             const item = currentData[index];
 
-            // 即時同步至手機鎖屏/通知列
             updateMediaSessionMetadata(item, index);
 
-            // 準備朗讀內容
             let wordJp = item.kana.includes('/') ? item.romaji : item.kana;
             let wordTw = item.reason || item.origin || '';
             
@@ -500,8 +556,6 @@
             isLoopingAll = true;
             isPaused = false;
             updateUIForPlaying();
-            
-            // 啟動螢幕保持常亮防護
             requestWakeLock();
 
             function loop(idx) {
@@ -526,7 +580,7 @@
             if (!isPaused) {
                 isPaused = true;
                 window.speechSynthesis.cancel();
-                releaseWakeLock(); // 暫停時解除螢幕強制開啟
+                releaseWakeLock();
 
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.playbackState = "paused";
@@ -537,7 +591,7 @@
                 updateStatusText(`已暫停於第 ${currentIndex + 1} 個單字。點擊「開始」即可繼續`);
             } else {
                 isPaused = false;
-                requestWakeLock(); // 恢復播放時重新維持螢幕常亮
+                requestWakeLock();
 
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.playbackState = "playing";
@@ -553,7 +607,7 @@
             isLoopingAll = false;
             isPaused = false;
             window.speechSynthesis.cancel();
-            releaseWakeLock(); // 完全停止時允許螢幕休眠
+            releaseWakeLock();
 
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.playbackState = "none";
